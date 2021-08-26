@@ -11,6 +11,8 @@ import urllib
 import requests
 import pymysql
 
+
+
 def get_data(name,n):
 
     
@@ -20,13 +22,12 @@ def get_data(name,n):
     
     
         
+    id_list=[]
     name_list=[]
-    degree_list=[]
-    requirement_list=[]
-    departmentName_list=[]
-    firstCategory_list=[]
     workExperience_list=[]
+    degree_list=[]
     workLocation_list=[]
+
     
     for j in range(1,n+1):
         payload = {
@@ -42,20 +43,17 @@ def get_data(name,n):
     
         
         
-        for i in data:
-            name_list.append(i['name'])
-            degree_list.append(i['degree'])
-            requirement_list.append(i['requirement'])
-            departmentName_list.append(i['departmentName'])
-            firstCategory_list.append(i['firstCategory'])
-            workExperience_list.append(i['workExperience'])
-            workLocation_list.append(i['workLocation'])
-            
-    dict1={'name':name_list,
-                'degree':degree_list,
-                'departmentName':departmentName_list,
-                'firstCategory':firstCategory_list,
+        for job in data:
+            id_list.append(job['id'])
+            name_list.append(job['name'])
+            workExperience_list.append(job['workExperience'])
+            degree_list.append(job['degree'])
+            workLocation_list.append(job['workLocation'])
+           
+    dict1={'id':id_list,
+                'name':name_list,
                 'workExperience':workExperience_list,
+                'degree':degree_list,
                 'workLocation':workLocation_list,
                 }
     
@@ -66,34 +64,50 @@ def Save_data(data,savename):
     df.to_csv(f'./data/{savename}-post.csv')
 
 def Save_data_sql(data,name):
-    db = pymysql.connect(host='192.168.19.149' , user='root',
-                         password='Uplooking_123' , port=3306 , db='spiders' , charset='utf8')
-    cursor = db.cursor()
-    cursor.execute(f'drop table if exists {name}_db')
-    df=pd.DataFrame(data)
     
-    sql1 = f'''create table {name}_db(id int auto_increment primary key not null,
-                            name varchar(256) ,
-                            degree varchar(256),
-                            departmentName varchar(256),
-                            firstCategory varchar(256),
-                            workExperience varchar(256),
-                            workLocation  varchar(256),
-                            )'''
-    cursor.execute(sql1)
-    for dt in range(len(df)):
-        data1=df.iloc[dt].values
-        sql2 = f'insert into {name}_db values(%d,%s,%s,%s,%s,%s,%s)'
-        try:
-            cursor.execute(sql2,(data1[0],data1[1],data1[2],data1[3],data1[4],data1[5],data1[6]))
+    df=pd.DataFrame(data)
+    db=pymysql.connect(host='localhost',
+                       user='root',
+                       password='Uplooking_123',
+                       port=3306,
+                       db='spiders',
+                       charset='utf8')
+    
+    cursor=db.cursor()
+    cursor.execute(f'drop table if exists {name}_post')
+    
+    sql=f'''create table {name}_post(
+    id int auto_increment primary key not null,
+    name varchar(256) not null,
+    workExperience varchar(256) not null,
+    degree varchar(256) not null,
+    workLocation varchar(256) not null
+   )'''
+    
+    cursor.execute(sql)
+    db.commit()
+    
+    
+    with db.cursor() as cur:
+        for i in range(len(df)):
+            ds=df.iloc[i].values
+            cur.execute(f'''
+                        insert into {name}_post(id, name, workExperience, degree, workLocation )  
+                        values({ds[0]},'{ds[1]}',
+                                '{ds[2]}','{ds[3]}','{ds[4]}')
+                        ''')
             db.commit()
             
-        
-        except:
-            print("插入失败")
-            db.rollback()
-
     
+
+# =============================================================================
+#     list2=df.iloc[3].values
+#     
+#     print(f'{list2[0]},{list2[1]}') 
+#     
+#     db.close()
+#     
+# =============================================================================
 def main():
     name=input("input post:")
     n=int(input('Enter the number of pages:'))
