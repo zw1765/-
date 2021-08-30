@@ -12,16 +12,16 @@ class MyqiushiSpider(CrawlSpider):
     
     rules = [
         Rule(
-            # 链接规则
+            
             LinkExtractor(
-                # allow：满足括号中“正则表达式”的值会被提取，如果为空，则全部匹配。
-                allow=('text/page/\d/',), # 允许href的值
-                # restrict_xpaths：使用xpath表达式，和allow共同作用过滤链接。
+               
+                allow=('text/page/\d/',), 
+                
                 restrict_xpaths = ('//ul[@class="pagination"]',)
             ),
-            # 回调函数
+            
             callback = 'parse',
-            # 跟随爬取
+            
             follow=True
         )
     ]
